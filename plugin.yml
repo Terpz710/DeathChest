@@ -1,0 +1,6 @@
+name: DeathChest
+version: 1.0.0
+author: Terpz710
+api: 5.0.0
+main: Terpz710\DeathChest\Main
+description: When a player dies it will add the items into a chest
