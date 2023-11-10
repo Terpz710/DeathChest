@@ -65,7 +65,7 @@ class Main extends PluginBase implements Listener {
             $item->setCount(--$count);
             $player->getInventory()->setItemInHand($item);
             $player->sendMessage("§r§l§c(!)§r§f You have claimed the loot from the §eDeathChest§f!");
-            $player->sendTitle("§eLoot Claimed!", "Enjoy the loot:)");
+            $player->sendTitle("§eLoot Claimed!", "Enjoy the loot:)"); // Make a message.yml so users can edit the message.
         }
     }
 }
