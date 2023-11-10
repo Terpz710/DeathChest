@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Terpz710\DeathChest;
 
 use pocketmine\event\Listener;
