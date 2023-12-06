@@ -64,7 +64,7 @@ class Main extends PluginBase implements Listener {
                     $player->getWorld()->dropItem($player->getPosition(), $item);
                 }
             }
-            $event->setCancelled();
+            $event->cancel();
             $itemCount = $item->getCount();
             $itemCount--;
             $item->setCount($itemCount);
