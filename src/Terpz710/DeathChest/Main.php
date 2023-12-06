@@ -29,13 +29,17 @@ class Main extends PluginBase implements Listener {
         if ($player instanceof Player) {
             $drop = VanillaBlocks::CHEST()->asItem();
             $drop->setCustomName(TextFormat::RESET . TextFormat::YELLOW . $player->getName() . "'s Loot");
-            $drop->setLore([TextFormat::RESET . TextFormat::BOLD . TextFormat::RED . "(!) " . TextFormat::RESET . "Right Click/Tap to claim"]);
             $nbt = $drop->getNamedTag();
             $tags = [];
+            $lore = [];
             foreach ($event->getDrops() as $item) {
                 $tags[] = $item->nbtSerialize();
+                $lore[] = TextFormat::RESET . $item->getName() . " x" . $item->getCount();
             }
+
             $nbt->setTag("PlayerItems", new ListTag($tags));
+            $drop->setLore(array_merge([TextFormat::RESET . TextFormat::BOLD . TextFormat::RED . "(!) " . TextFormat::RESET . "Right Click/Tap to claim"], $lore));
+            
             $event->setDrops([$drop]);
         }
     }
@@ -60,7 +64,7 @@ class Main extends PluginBase implements Listener {
                     $player->getWorld()->dropItem($player->getPosition(), $item);
                 }
             }
-            $event->cancel();
+            $event->setCancelled();
             $itemCount = $item->getCount();
             $itemCount--;
             $item->setCount($itemCount);
