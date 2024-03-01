@@ -76,6 +76,7 @@ class Main extends PluginBase implements Listener {
             $player->getInventory()->setItemInHand($item);
             $player->sendMessage($this->messages->get("claimed-message"));
             $player->sendTitle($this->messages->get("claimed-title"));
+            $player->sendSubTitle($this->messages->get("claimed-subtitle"));
         }
     }
 }
