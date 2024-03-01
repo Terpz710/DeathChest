@@ -20,6 +20,8 @@ use pocketmine\utils\Config;
 
 class Main extends PluginBase implements Listener {
 
+    private $messages;
+
     public function onEnable(): void {
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
         $this->saveResource("messages.yml");
