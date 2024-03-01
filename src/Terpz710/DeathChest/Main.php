@@ -16,11 +16,14 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\StringTag;
 use pocketmine\utils\TextFormat;
+use pocketmine\utils\Config;
 
 class Main extends PluginBase implements Listener {
 
     public function onEnable(): void {
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
+        $this->saveResource("messages.yml");
+        $this->messages = new Config($this->getDataFolder() . "messages.yml", Config::YAML);
     }
 
     public function onDeath(PlayerDeathEvent $event): void {
@@ -69,8 +72,8 @@ class Main extends PluginBase implements Listener {
             $itemCount--;
             $item->setCount($itemCount);
             $player->getInventory()->setItemInHand($item);
-            $player->sendMessage("§r§l§c(!)§r§f You have claimed the loot from the §eDeathChest§f!");
-            $player->sendTitle("§eLoot Claimed!", "Enjoy the loot:)"); // Make a message.yml so users can edit the message.
+            $player->sendMessage($this->messages->get("claimed-message"));
+            $player->sendTitle($this->messages->get("claimed-title"));
         }
     }
 }
