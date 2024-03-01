@@ -3,8 +3,8 @@
 # The message sent after the player had claimed the death chest
 claimed-message: "§r§l§c(!)§r§f You have claimed the loot from the §eDeathChest§f!"
 
-The title sent after the player had claimed the death chest
+# The title sent after the player had claimed the death chest
 claimed-title: "§eLoot Claimed!"
 
-The subtitle sent after the player had claimed the death chest
+# The subtitle sent after the player had claimed the death chest
 claimed-subtitle: "Enjoy the loot:)"
