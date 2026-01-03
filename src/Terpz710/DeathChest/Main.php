@@ -4,79 +4,94 @@ declare(strict_types=1);
 
 namespace Terpz710\DeathChest;
 
+use pocketmine\block\VanillaBlocks;
 use pocketmine\event\Listener;
-use pocketmine\plugin\PluginBase;
-use pocketmine\player\Player;
-use pocketmine\Server;
 use pocketmine\event\player\PlayerDeathEvent;
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\item\Item;
-use pocketmine\block\VanillaBlocks;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
-use pocketmine\nbt\tag\StringTag;
-use pocketmine\utils\TextFormat;
+use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
+use pocketmine\utils\TextFormat;
+use function count;
 
 class Main extends PluginBase implements Listener {
+	private const NBT_TAG = 'DeathChestItems';
+	private Config $messages;
 
-    private $messages;
+	public function onEnable() : void {
+		$this->getServer()->getPluginManager()->registerEvents($this, $this);
+		$this->saveResource('messages.yml');
+		$this->messages = new Config($this->getDataFolder() . 'messages.yml', Config::YAML);
+	}
 
-    public function onEnable(): void {
-        $this->getServer()->getPluginManager()->registerEvents($this, $this);
-        $this->saveResource("messages.yml");
-        $this->messages = new Config($this->getDataFolder() . "messages.yml", Config::YAML);
-    }
+	public function onDeath(PlayerDeathEvent $event) : void {
+		$player = $event->getPlayer();
+		$drops = $event->getDrops();
 
-    public function onDeath(PlayerDeathEvent $event): void {
-        $player = $event->getPlayer();
+		if (count($drops) === 0) {
+			return;
+		}
 
-        if ($player instanceof Player) {
-            $drop = VanillaBlocks::CHEST()->asItem();
-            $drop->setCustomName(TextFormat::RESET . TextFormat::YELLOW . $player->getName() . "'s Loot");
-            $nbt = $drop->getNamedTag();
-            $tags = [];
-            $lore = [];
-            foreach ($event->getDrops() as $item) {
-                $tags[] = $item->nbtSerialize();
-                $lore[] = TextFormat::RESET . $item->getName() . " x" . $item->getCount();
-            }
+		$chest = VanillaBlocks::CHEST()->asItem();
+		$chest->setCustomName(TextFormat::RESET . TextFormat::YELLOW . $player->getName() . "'s Loot");
 
-            $nbt->setTag("PlayerItems", new ListTag($tags));
-            $drop->setLore(array_merge([TextFormat::RESET . TextFormat::BOLD . TextFormat::RED . "(!) " . TextFormat::RESET . "Right Click/Tap to claim"], $lore));
-            
-            $event->setDrops([$drop]);
-        }
-    }
+		$nbt = $chest->getNamedTag();
+		$itemTags = [];
+		$lore = [TextFormat::RESET . TextFormat::BOLD . TextFormat::RED . '(!) ' . TextFormat::RESET . 'Right Click/Tap to claim'];
 
-    public function onInteract(PlayerInteractEvent $event) {
-        $player = $event->getPlayer();
-        $item = $event->getItem();
+		foreach ($drops as $item) {
+			$itemTags[] = $item->nbtSerialize();
+			$lore[] = TextFormat::RESET . $item->getName() . ' x' . $item->getCount();
+		}
 
-        if (!$player instanceof Player) {
-            return;
-        }
-        if ($item->getNamedTag()->getTag("PlayerItems") !== null) {
-            $tag = $item->getNamedTag()->getListTag("PlayerItems");
+		$nbt->setTag(self::NBT_TAG, new ListTag($itemTags));
+		$chest->setLore($lore);
 
-            /** @var CompoundTag $nbt */
-            foreach ($tag->getValue() as $nbt) {
-                $item = Item::nbtDeserialize($nbt);
+		$event->setDrops([$chest]);
+	}
 
-                if ($player->getInventory()->canAddItem($item)) {
-                    $player->getInventory()->addItem($item);
-                } else {
-                    $player->getWorld()->dropItem($player->getPosition(), $item);
-                }
-            }
-            $event->cancel();
-            $itemCount = $item->getCount();
-            $itemCount--;
-            $item->setCount($itemCount);
-            $player->getInventory()->setItemInHand($item);
-            $player->sendMessage($this->messages->get("claimed-message"));
-            $player->sendTitle($this->messages->get("claimed-title"));
-            $player->sendSubTitle($this->messages->get("claimed-subtitle"));
-        }
-    }
+	public function onInteract(PlayerInteractEvent $event) : void {
+		$player = $event->getPlayer();
+		$item = $event->getItem();
+
+		$tag = $item->getNamedTag()->getTag(self::NBT_TAG);
+		if ($tag === null || !($tag instanceof ListTag)) {
+			return;
+		}
+
+		$event->cancel();
+
+		$inventory = $player->getInventory();
+		$world = $player->getWorld();
+		$position = $player->getPosition();
+
+		foreach ($tag->getValue() as $nbt) {
+			if (!$nbt instanceof CompoundTag) {
+				continue;
+			}
+
+			$deserializedItem = Item::nbtDeserialize($nbt);
+
+			if ($inventory->canAddItem($deserializedItem)) {
+				$inventory->addItem($deserializedItem);
+			} else {
+				$world->dropItem($position, $deserializedItem);
+			}
+		}
+
+		$newCount = $item->getCount() - 1;
+		if ($newCount <= 0) {
+			$inventory->setItemInHand($item->setCount(0));
+		} else {
+			$inventory->setItemInHand($item->setCount($newCount));
+		}
+
+		$player->sendMessage($this->messages->get('claimed-message', '§r§l§c(!)§r§f You have claimed the loot!'));
+		$player->sendTitle(
+			$this->messages->get('claimed-title', '§eLoot Claimed!'),
+			$this->messages->get('claimed-subtitle', 'Enjoy the loot:)')
+		);
+	}
 }
